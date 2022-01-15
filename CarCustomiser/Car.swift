@@ -9,7 +9,7 @@ import Foundation
 
 struct Car {
     let make: String
-    let model: String
+    var model: String
     var topSpeed: Int
     var acceleration: Double
     var handling: Int
