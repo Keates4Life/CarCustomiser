@@ -14,22 +14,30 @@ struct ContentView: View {
     
     @State private var exhaustPackage = false
     private var exhaustPackageDisabled: Bool {
-        get { return !exhaustPackage && money < 300}
+        get { return remainingTime == 0 || (!exhaustPackage && money < 300)}
     }
     @State private var tiresPackage = false
     private var tiresPackageDisabled: Bool {
-        get { return !tiresPackage && money < 400}
+        get { return remainingTime == 0 || (!tiresPackage && money < 400)}
     }
     @State private var nitrusPackage = false
     private var nitrusPackageDisabled: Bool {
-        get { return !nitrusPackage && money < 500}
+        get { return remainingTime == 0 || (!nitrusPackage && money < 500)}
     }
     @State private var paintJob = false
     private var paintJobDisabled: Bool {
-        get { return !paintJob && money < 1000}
+        get { return remainingTime == 0 || (!paintJob && money < 1000)}
     }
     
     @State private var money = 1000
+    
+    @State private var remainingTime = 30
+    
+    let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
+    
+    private var nextButtonDisabled: Bool {
+        get { return remainingTime == 0 }
+    }
     
     var body: some View {
         
@@ -93,28 +101,35 @@ struct ContentView: View {
                 self.paintJob = newValue
             }
         )
-        
-        Form {
+        VStack {
+            Text("\(remainingTime)").onReceive(timer) { _ in
+                if self.remainingTime > 0 {
+                    self.remainingTime -= 1
+                }
+            }
+
+            Form {
+                VStack (alignment: .leading, spacing: 20){
+                    Text("\(starterCars.cars[selectedCar].displayStats())")
+                        .padding()
+                    Button("Next Car", action: {
+                        exhaustPackageBinding.wrappedValue = false
+                        tiresPackageBinding.wrappedValue = false
+                        nitrusPackageBinding.wrappedValue = false
+                        paintJobBinding.wrappedValue = false
+                            selectedCar = (selectedCar + 1) % starterCars.cars.count
+                    }).disabled(nextButtonDisabled)
+                }
+                Section {
+                    Toggle("Exhaust Package ($300)", isOn: exhaustPackageBinding).disabled(exhaustPackageDisabled)
+                    Toggle("Tires Package ($400)", isOn: tiresPackageBinding).disabled(tiresPackageDisabled)
+                    Toggle("Nitrus Package ($500)", isOn: nitrusPackageBinding).disabled(nitrusPackageDisabled)
+                    Toggle("Paint Job ($1000)", isOn: paintJobBinding).disabled(paintJobDisabled)
+                }
+            }
             Text("$\(money)")
-            
-            VStack (alignment: .leading, spacing: 20){
-                Text("\(starterCars.cars[selectedCar].displayStats())")
-                    .padding()
-                Button("Next Car", action: {
-                    exhaustPackageBinding.wrappedValue = false
-                    tiresPackageBinding.wrappedValue = false
-                    nitrusPackageBinding.wrappedValue = false
-                    paintJobBinding.wrappedValue = false
-                        selectedCar = (selectedCar + 1) % starterCars.cars.count
-                    })
-            }
-            Section {
-                Toggle("Exhaust Package ($300)", isOn: exhaustPackageBinding).disabled(exhaustPackageDisabled)
-                Toggle("Tires Package ($400)", isOn: tiresPackageBinding).disabled(tiresPackageDisabled)
-                Toggle("Nitrus Package ($500)", isOn: nitrusPackageBinding).disabled(nitrusPackageDisabled)
-                Toggle("Paint Job ($1000)", isOn: paintJobBinding).disabled(paintJobDisabled)
-            }
         }
+        
     }
 }
 
